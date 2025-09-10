@@ -16,6 +16,13 @@ services:
       DB_PORT: "3306"
       MYSQL_ROOT_PASSWORD: admin
       MARIADB_ROOT_PASSWORD: admin
+    # --- HEALTCHECK ADICIONADO ---
+    # Verifica se o serviço principal do Frappe está respondendo na porta 8000.
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   configurator:
     image: frappe/erpnext:v15.78.1
@@ -126,6 +133,13 @@ services:
       - logs:/home/frappe/frappe-bench/logs
     ports:
       - "8090:8090"
+    # --- HEALTCHECK ADICIONADO ---
+    # Verifica se o NGINX está respondendo na porta 80.
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:80"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   queue-long:
     image: frappe/erpnext:v15.78.1
@@ -204,6 +218,13 @@ services:
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
+    # --- HEALTCHECK ADICIONADO ---
+    # Verifica se o serviço de websocket está respondendo na porta 9000.
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   db-data:
