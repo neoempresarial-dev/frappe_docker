@@ -16,13 +16,6 @@ services:
       DB_PORT: "3306"
       MYSQL_ROOT_PASSWORD: admin
       MARIADB_ROOT_PASSWORD: admin
-    # --- HEALTCHECK CORRIGIDO ---
-    # O serviço do Frappe escuta na porta 8000 internamente.
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8000"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   configurator:
     image: frappe/erpnext:v15.78.1
@@ -91,8 +84,9 @@ services:
     networks:
       - frappe_network
     healthcheck:
-      test: mysqladmin ping -h localhost --password=admin
-      interval: 1s
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 10s
       retries: 20
     deploy:
       restart_policy:
@@ -120,8 +114,6 @@ services:
     command:
       - nginx-entrypoint.sh
     environment:
-      # --- PORTA CORRIGIDA ---
-      # O NGINX deve apontar para a porta interna correta do backend (8000)
       BACKEND: backend:8000
       FRAPPE_SITE_NAME_HEADER: frontend
       SOCKETIO: websocket:9000
@@ -134,16 +126,7 @@ services:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
     ports:
-      # --- PORTA EXTERNA ALTERADA ---
-      # Mapeia a porta 8380 do seu VPS para a porta 8080 do contêiner.
-      - "8380:8080"
-    # --- HEALTCHECK CORRIGIDO ---
-    # O NGINX deste contêiner escuta na porta 8080.
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - "8082:8080" # Alterado de 8080:8080 para 8082:8080
 
   queue-long:
     image: frappe/erpnext:v15.78.1
@@ -222,12 +205,6 @@ services:
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
-    # O healthcheck aqui já estava correto.
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9000"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
 volumes:
   db-data:
@@ -238,4 +215,3 @@ volumes:
 networks:
   frappe_network:
     driver: bridge
-
